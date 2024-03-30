@@ -22,7 +22,7 @@ import java.util.List;
 public class User implements UserDetails{
     @Id
     @GeneratedValue
-    private Long id;
+    private Integer id;
     @Column(name = "USER_NAME")
     private String userName;
     @Column(name = "LAST_NAME")

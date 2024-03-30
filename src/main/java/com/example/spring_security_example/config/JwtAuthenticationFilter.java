@@ -1,5 +1,6 @@
 package com.example.spring_security_example.config;
 
+import com.example.spring_security_example.token.TokenRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -22,6 +23,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
+    private final TokenRepository tokenRepository;
     @Override
     protected void doFilterInternal(
             @NonNull HttpServletRequest request,
@@ -36,9 +38,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
     jwt = authHeader.substring(7);
     userEmail = jwtService.extractUsername(jwt);
+
     if(userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+
         UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
-        if(jwtService.isTokenValid(jwt, userDetails)) {
+
+        var isTokenValid = tokenRepository.findByToken(jwt)
+                .map(token -> !token.isExpired() && !token.isRevoked())
+                .orElse(false);
+
+        if(jwtService.isTokenValid(jwt, userDetails) && isTokenValid) {
             UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                     userDetails,
                     null,
